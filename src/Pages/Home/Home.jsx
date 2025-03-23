@@ -1,5 +1,5 @@
 import Layout from "../../Components/Layout/Layout";
-import HeroSection from "../../Components/HeroSection/HeroSection";
+import HeroSection from "../../Components/heroSection/HeroSection";
 import Category from "../../Components/Category/Category";
 import HomePageProductCard from "../../Components/HomePageProductCard/HomePageProductCard";
 import Track from "../../Components/Track/Track";

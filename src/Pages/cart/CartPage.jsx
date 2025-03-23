@@ -11,47 +11,57 @@ import { useEffect, useState } from "react";
 import { Timestamp, addDoc, collection } from "firebase/firestore";
 import { fireDB } from "../../firebase/FirebaseConfig";
 import BuyNowModal from "../../Components/buyNowModal/BuyNowModal";
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 const CartPage = () => {
+  // Get cart items from Redux store
   const cartItems = useSelector((state) => state.cart);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
-  // Delete item from cart
+  // Get user info from local storage
+  const user = JSON.parse(localStorage.getItem("users"));
+
+  // Redirect to login if user is not authenticated
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Function to remove an item from the cart
   const deleteCart = (item) => {
     dispatch(deleteFromCart(item));
     toast.success("Item removed from cart");
   };
 
-  // Increment item quantity
+  // Function to increment item quantity
   const handleIncrement = (id) => {
     dispatch(incrementQuantity(id));
   };
 
-  // Decrement item quantity
+  // Function to decrement item quantity
   const handleDecrement = (id) => {
     dispatch(decrementQuantity(id));
   };
 
-  // Calculate total quantity
+  // Calculate total number of items, defaulting quantity to 1 if undefined
   const cartItemTotal = cartItems
-    .map((item) => item.quantity)
+    .map((item) => Number(item.quantity || 1))
     .reduce((prevValue, currValue) => prevValue + currValue, 0);
 
-  // Calculate total price
+  // Calculate total price, defaulting price to 0 and quantity to 1 if undefined
   const cartTotal = cartItems
-    .map((item) => item.price * item.quantity)
+    .map((item) => Number(item.price || 0) * Number(item.quantity || 1))
     .reduce((prevValue, currValue) => prevValue + currValue, 0);
 
+  // Define delivery charge and compute total amount
+  const deliveryCharge = 50;
+  const totalAmount = cartTotal + deliveryCharge;
+
+  // Sync cart items with local storage on change
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // User info
-  const user = JSON.parse(localStorage.getItem("users"));
-
-  // Address state with serialized timestamp
+  // State for address information
   const [addressInfo, setAddressInfo] = useState({
     name: "",
     address: "",
@@ -65,8 +75,9 @@ const CartPage = () => {
     }),
   });
 
+  // Function to handle order placement
   const buyNowFunction = async () => {
-    // Validation
+    // Validate required fields
     if (
       addressInfo.name === "" ||
       addressInfo.address === "" ||
@@ -76,13 +87,13 @@ const CartPage = () => {
       return toast.error("All fields are required");
     }
 
-    // Mobile number validation (example)
+    // Validate mobile number (10 digits)
     const mobileRegex = /^[0-9]{10}$/;
     if (!mobileRegex.test(addressInfo.mobileNumber)) {
       return toast.error("Please enter a valid mobile number");
     }
 
-    // Order info with serialized time
+    // Prepare order information
     const orderInfo = {
       cartItems,
       addressInfo: {
@@ -101,10 +112,11 @@ const CartPage = () => {
     };
 
     try {
+      // Add order to Firestore
       const orderRef = collection(fireDB, "order");
       await addDoc(orderRef, orderInfo);
 
-      // Reset address and cart after order is placed
+      // Reset address info and clear cart
       setAddressInfo({
         name: "",
         address: "",
@@ -112,19 +124,13 @@ const CartPage = () => {
         mobileNumber: "",
         time: Timestamp.now().toDate().toISOString(),
       });
-      dispatch(deleteFromCart([])); // Clear cart in Redux state (pass an empty array)
+      dispatch(deleteFromCart([])); // Clear cart in Redux state
       toast.success("Order placed successfully");
     } catch (error) {
       console.error("Error placing order: ", error);
       toast.error("Failed to place the order");
     }
   };
-
-  // Redirect to login if user is not logged in
-  if (!user) {
-    navigate("/login");
-    return null;
-  }
 
   return (
     <Layout>
@@ -145,14 +151,7 @@ const CartPage = () => {
               <ul role="list" className="divide-y divide-gray-200">
                 {cartItems.length > 0 ? (
                   cartItems.map((item, index) => {
-                    const {
-                      id,
-                      title,
-                      price,
-                      productImageUrl,
-                      quantity,
-                      category,
-                    } = item;
+                    const { id, title, price, productImageUrl, quantity, category } = item;
                     return (
                       <div key={index} className="">
                         <li className="flex py-6 sm:py-6">
@@ -181,7 +180,7 @@ const CartPage = () => {
                                 </div>
                                 <div className="mt-1 flex items-end">
                                   <p className="text-sm font-medium text-gray-900">
-                                    ₹{price}
+                                    ₹{Number(price || 0).toFixed(2)}
                                   </p>
                                 </div>
                               </div>
@@ -200,7 +199,7 @@ const CartPage = () => {
                             <input
                               type="text"
                               className="mx-1 h-7 w-9 rounded-md border text-center"
-                              value={quantity}
+                              value={quantity || 1}
                               readOnly
                             />
                             <button
@@ -251,21 +250,23 @@ const CartPage = () => {
                       Price ({cartItemTotal} items)
                     </dt>
                     <dd className="text-sm font-medium text-gray-900">
-                      ₹{cartTotal}
+                      ₹{cartTotal.toFixed(2)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between py-4">
                     <dt className="flex text-sm text-gray-800">
                       <span>Delivery Charges</span>
                     </dt>
-                    <dd className="text-sm font-medium text-green-700">Free</dd>
+                    <dd className="text-sm font-medium text-gray-900">
+                      ₹{deliveryCharge.toFixed(2)}
+                    </dd>
                   </div>
                   <div className="flex items-center justify-between border-y border-dashed py-4">
                     <dt className="text-base font-medium text-gray-900">
                       Total Amount
                     </dt>
                     <dd className="text-base font-medium text-gray-900">
-                      ₹{cartTotal}
+                      ₹{totalAmount.toFixed(2)}
                     </dd>
                   </div>
                 </dl>

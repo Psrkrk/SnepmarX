@@ -1,11 +1,16 @@
-import Navbar from "../Nabvar/Navbar";
-import Footer from "../Footer/Footer";
+import Navbar from "../Nabvar/Navbar"; // Import Navbar
+import Footer from "../Footer/Footer"; // Import Footer
 
 const Layout = ({ children }) => {
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
+      {/* Navbar Always Visible */}
       <Navbar />
-      <div className="main-content min-h-screen">{children}</div>
+
+      {/* Main Content */}
+      <main className="flex-grow">{children}</main>
+
+      {/* Footer Always Visible */}
       <Footer />
     </div>
   );

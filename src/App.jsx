@@ -17,6 +17,8 @@ import UpdateProductPage from "./Pages/admin/UpdateProductPage";
 import { ProtectedRouteForUser } from "./protectedRoute/ProtectedRouteForUser";
 import { ProtectedRouteForAdmin } from "./protectedRoute/ProtectedRouteForAdmin";
 import MyState from "./context/myState";
+import Contact from "./Pages/contact/Contact";
+import About from "./Pages/about/About";
 
 const App = () => {
   return (
@@ -25,6 +27,8 @@ const App = () => {
         <ScrollTop />
         <Routes>
           {/* Public Routes */}
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/about" element={<About />} />
           <Route path="/" element={<Home />} />
           <Route path="/productinfo/:id" element={<ProductInfo />} />{" "}
           {/* Fixed Route */}

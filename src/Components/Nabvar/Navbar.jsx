@@ -1,98 +1,137 @@
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { useState } from "react";
 import SearchBar from "../searchBar/SearchBar";
 import { useSelector } from "react-redux";
+import { FaBars, FaTimes, FaShoppingCart } from "react-icons/fa";
 
 const Navbar = () => {
-  const user = JSON.parse(localStorage.getItem("users"));
-  const navigate = useNavigate();
+    // get user from localStorage
+    const user = JSON.parse(localStorage.getItem("users"));
 
-  const logout = () => {
-    localStorage.clear("users");
-    navigate("/login");
-  };
+    // navigate
+    const navigate = useNavigate();
 
-  const cartItems = useSelector((state) => state.cart);
+    // logout function
+    const logout = () => {
+        localStorage.removeItem("users");
+        navigate("/login");
+    };
 
-  const navList = (
-    <motion.ul
-      className="flex space-x-3 text-white font-medium text-md px-5"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      {/* Home */}
-      <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-        <Link to={"/"}>Home</Link>
-      </motion.li>
+    // CartItems
+    const cartItems = useSelector((state) => state.cart);
 
-      {/* All Product */}
-      <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-        <Link to={"/allproduct"}>All Product</Link>
-      </motion.li>
+    // Mobile menu state
+    const [isOpen, setIsOpen] = useState(false);
 
-      {/* Signup */}
-      {!user && (
-        <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Link to={"/signup"}>Signup</Link>
-        </motion.li>
-      )}
+    return (
+        <nav className="bg-pink-600 sticky top-0 w-full shadow-md z-50">
+            <div className="container mx-auto flex justify-between items-center py-3 px-4">
+                {/* Logo */}
+                <Link to="/" className="text-white font-bold text-2xl">
+                    E-Bharat
+                </Link>
 
-      {/* Login */}
-      {!user && (
-        <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Link to={"/login"}>Login</Link>
-        </motion.li>
-      )}
+                {/* Search Bar (Hidden in mobile) */}
+                <div className="hidden md:block">
+                    <SearchBar />
+                </div>
 
-      {/* User Greeting */}
-      {user && (
-        <motion.li className="text-white">
-          Hello, <span className="font-semibold">{user.name}</span>
-        </motion.li>
-      )}
+                {/* Mobile Menu Button */}
+                <button
+                    className="md:hidden text-white text-2xl"
+                    onClick={() => setIsOpen(!isOpen)}
+                >
+                    {isOpen ? <FaTimes /> : <FaBars />}
+                </button>
 
-      {/* Logout */}
-      {user && (
-        <motion.li
-          className="cursor-pointer"
-          onClick={logout}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          Logout
-        </motion.li>
-      )}
+                {/* Desktop Navigation */}
+                <ul className="hidden md:flex space-x-6 text-white font-medium">
+                    <li>
+                        <Link to="/" className="hover:text-gray-200">Home</Link>
+                    </li>
+                    <li>
+                        <Link to="/allproduct" className="hover:text-gray-200">All Products</Link>
+                    </li>
+                    {!user && (
+                        <>
+                            <li>
+                                <Link to="/signup" className="hover:text-gray-200">Signup</Link>
+                            </li>
+                            <li>
+                                <Link to="/login" className="hover:text-gray-200">Login</Link>
+                            </li>
+                        </>
+                    )}
+                    {user?.role === "user" && (
+                        <li>
+                            <Link to="/user-dashboard" className="hover:text-gray-200">User</Link>
+                        </li>
+                    )}
+                    {user?.role === "admin" && (
+                        <li>
+                            <Link to="/admin-dashboard" className="hover:text-gray-200">Admin</Link>
+                        </li>
+                    )}
+                    {user && (
+                        <li onClick={logout} className="cursor-pointer hover:text-gray-200">
+                            Logout
+                        </li>
+                    )}
+                    <li>
+                        <Link to="/cart" className="hover:text-gray-200 flex items-center">
+                            <FaShoppingCart className="mr-1" />
+                            ({cartItems.length})
+                        </Link>
+                    </li>
+                </ul>
+            </div>
 
-      {/* Cart */}
-      <motion.li whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-        <Link to={"/cart"}>Cart({cartItems.length})</Link>
-      </motion.li>
-    </motion.ul>
-  );
-
-  return (
-    <nav className="bg-pink-600 sticky top-0 z-50">
-      <div className="lg:flex lg:justify-between items-center py-3 lg:px-3">
-        {/* Left */}
-        <div className="left py-3 lg:py-0">
-          <Link to={"/"}>
-            <h2 className="font-bold text-white text-2xl text-center">
-              SnapMart
-            </h2>
-          </Link>
-        </div>
-
-        {/* Right - Navigation Links */}
-        <div className="right flex justify-center mb-4 lg:mb-0">{navList}</div>
-
-        {/* Search Bar */}
-        <div className="hidden lg:block">
-          <SearchBar />
-        </div>
-      </div>
-    </nav>
-  );
+            {/* Mobile Navigation Menu */}
+            {isOpen && (
+                <div className="md:hidden bg-pink-700 p-4">
+                    <ul className="space-y-4 text-white text-center">
+                        <li>
+                            <Link to="/" onClick={() => setIsOpen(false)}>Home</Link>
+                        </li>
+                        <li>
+                            <Link to="/allproduct" onClick={() => setIsOpen(false)}>All Products</Link>
+                        </li>
+                        {!user && (
+                            <>
+                                <li>
+                                    <Link to="/signup" onClick={() => setIsOpen(false)}>Signup</Link>
+                                </li>
+                                <li>
+                                    <Link to="/login" onClick={() => setIsOpen(false)}>Login</Link>
+                                </li>
+                            </>
+                        )}
+                        {user?.role === "user" && (
+                            <li>
+                                <Link to="/user-dashboard" onClick={() => setIsOpen(false)}>User</Link>
+                            </li>
+                        )}
+                        {user?.role === "admin" && (
+                            <li>
+                                <Link to="/admin-dashboard" onClick={() => setIsOpen(false)}>Admin</Link>
+                            </li>
+                        )}
+                        {user && (
+                            <li onClick={() => { logout(); setIsOpen(false); }} className="cursor-pointer">
+                                Logout
+                            </li>
+                        )}
+                        <li>
+                            <Link to="/cart" onClick={() => setIsOpen(false)} className="flex justify-center items-center">
+                                <FaShoppingCart className="mr-1" />
+                                ({cartItems.length})
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
+            )}
+        </nav>
+    );
 };
 
 export default Navbar;
