@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import MyContext from "./myContext";
 import {
   collection,
@@ -13,106 +13,109 @@ import { fireDB } from "../firebase/FirebaseConfig";
 import toast from "react-hot-toast";
 
 function MyState({ children }) {
-  // Loading State
   const [loading, setLoading] = useState(false);
-
-  // User State
   const [getAllProduct, setGetAllProduct] = useState([]);
+  const [getAllOrder, setGetAllOrder] = useState([]);
+  const [getAllUser, setGetAllUser] = useState([]);
 
-  /**========================================================================
-   *                          GET All Product Function
-   *========================================================================**/
+  // Store unsubscribe functions
+  const [unsubscribes, setUnsubscribes] = useState({
+    products: null,
+    orders: null,
+    users: null
+  });
 
-  const getAllProductFunction = async () => {
+  const getAllProductFunction = useCallback(() => {
     setLoading(true);
     try {
       const q = query(collection(fireDB, "products"), orderBy("time"));
-      const data = onSnapshot(q, (QuerySnapshot) => {
-        let productArray = [];
-        QuerySnapshot.forEach((doc) => {
-          productArray.push({ ...doc.data(), id: doc.id });
-        });
+      const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
+        const productArray = QuerySnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id
+        }));
         setGetAllProduct(productArray);
         setLoading(false);
       });
-      return () => data;
+      setUnsubscribes(prev => ({...prev, products: unsubscribe}));
+      return unsubscribe;
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching products:", error);
       setLoading(false);
+      toast.error("Failed to load products");
     }
-  };
+  }, []);
 
-  // Order State
-  const [getAllOrder, setGetAllOrder] = useState([]);
-
-  /**========================================================================
-   *                           GET All Order Function
-   *========================================================================**/
-
-  const getAllOrderFunction = async () => {
+  const getAllOrderFunction = useCallback(() => {
     setLoading(true);
     try {
       const q = query(collection(fireDB, "order"), orderBy("time"));
-      const data = onSnapshot(q, (QuerySnapshot) => {
-        let orderArray = [];
-        QuerySnapshot.forEach((doc) => {
-          orderArray.push({ ...doc.data(), id: doc.id });
-        });
+      const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
+        const orderArray = QuerySnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id
+        }));
         setGetAllOrder(orderArray);
         setLoading(false);
       });
-      return () => data;
+      setUnsubscribes(prev => ({...prev, orders: unsubscribe}));
+      return unsubscribe;
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching orders:", error);
       setLoading(false);
+      toast.error("Failed to load orders");
     }
-  };
+  }, []);
 
-  // Delete oder Function
-  const deleteProduct = async (id) => {
-    setLoading(true);
-    try {
-      await deleteDoc(doc(fireDB, "order", id));
-      toast.success("Order Deleted successfully");
-      getAllOrderFunction();
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-    }
-  };
-
-  // user State
-  const [getAllUser, setGetAllUser] = useState([]);
-
-  /**========================================================================
-   *                           GET All User Function
-   *========================================================================**/
-
-  const getAllUserFunction = async () => {
+  const getAllUserFunction = useCallback(() => {
     setLoading(true);
     try {
       const q = query(collection(fireDB, "user"), orderBy("time"));
-      const data = onSnapshot(q, (QuerySnapshot) => {
-        let userArray = [];
-        QuerySnapshot.forEach((doc) => {
-          userArray.push({ ...doc.data(), id: doc.id });
-        });
+      const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
+        const userArray = QuerySnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id
+        }));
         setGetAllUser(userArray);
         setLoading(false);
       });
-      return () => data;
+      setUnsubscribes(prev => ({...prev, users: unsubscribe}));
+      return unsubscribe;
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching users:", error);
+      setLoading(false);
+      toast.error("Failed to load users");
+    }
+  }, []);
+
+  const deleteOrder = useCallback(async (id) => {
+    setLoading(true);
+    try {
+      await deleteDoc(doc(fireDB, "order", id));
+      toast.success("Order deleted successfully");
+      getAllOrderFunction();
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast.error("Failed to delete order");
+    } finally {
       setLoading(false);
     }
-  };
+  }, [getAllOrderFunction]);
 
   useEffect(() => {
+    // Initialize all data fetches
     getAllProductFunction();
     getAllOrderFunction();
     getAllUserFunction();
-  }, []);
+
+    // Cleanup function
+    return () => {
+      if (unsubscribes.products) unsubscribes.products();
+      if (unsubscribes.orders) unsubscribes.orders();
+      if (unsubscribes.users) unsubscribes.users();
+    };
+  }, [getAllProductFunction, getAllOrderFunction, getAllUserFunction]);
+
   return (
     <MyContext.Provider
       value={{
@@ -121,7 +124,7 @@ function MyState({ children }) {
         getAllProduct,
         getAllProductFunction,
         getAllOrder,
-        deleteProduct,
+        deleteOrder,
         getAllUser,
       }}
     >

@@ -1,16 +1,20 @@
-import Navbar from "../Nabvar/Navbar"; // Import Navbar
-import Footer from "../Footer/Footer"; // Import Footer
+import Navbar from "../Nabvar/Navbar";
+import Footer from "../Footer/Footer";
 
 const Layout = ({ children }) => {
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Navbar Always Visible */}
-      <Navbar />
+      {/* Fixed Navbar that stays at top */}
+      <header className="fixed w-full top-0 z-50 bg-white shadow-sm">
+        <Navbar />
+      </header>
 
-      {/* Main Content */}
-      <main className="flex-grow">{children}</main>
+      {/* Main Content with padding to account for fixed navbar */}
+      <main className="flex-grow pt-16"> {/* Adjust pt-16 based on your navbar height */}
+        {children}
+      </main>
 
-      {/* Footer Always Visible */}
+      {/* Footer */}
       <Footer />
     </div>
   );

@@ -8,6 +8,7 @@ import { auth, fireDB } from "../../firebase/FirebaseConfig";
 import Loader from "../../Components/loader/Loader";
 import { getDocs, query, where, collection } from "firebase/firestore";
 
+
 const Login = () => {
   const context = useContext(myContext);
   const { loading, setLoading } = context;
@@ -51,7 +52,7 @@ const Login = () => {
         setUserLogin({ email: "", password: "" });
         toast.success("Login Successfully");
 
-        navigate(user.role === "user" ? "/user-dashboard" : "/admin-dashboard");
+        navigate(user.role === "user" ? "/" : "/");
       } else {
         toast.error("User not found.");
       }
