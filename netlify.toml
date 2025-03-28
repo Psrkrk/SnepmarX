@@ -1,4 +1,0 @@
-[build]
-  base = "src"   # Change to your correct base directory (if needed)
-  publish = "build"  # Change if using Next.js (use "out") or Vite (use "dist")
-  command = "npm run build"
